@@ -1,0 +1,34 @@
+# Python virtual environment
+venv/
+
+# Environment variables
+.env
+
+# Data files
+data/pdfs/
+data/vector_store/
+data/document_metadata.json
+
+
+# Log files
+logs/
+
+
+# PyCache
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode settings
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
