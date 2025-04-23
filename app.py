@@ -201,35 +201,46 @@ def render_chat_interface(chatbot, doc_processor):
         st.session_state.messages = []
         chatbot.reset_chat_history()
         st.rerun()
-
 def render_document_management(doc_processor):
     st.title("Document Management")
     st.write("Upload and manage compliance documents here.")
     
-    # Upload new document
+    # Upload new documents
     with st.form("upload_form"):
-        uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
-        custom_filename = st.text_input("Custom Filename (Optional)", help="If left blank, the original filename will be used")
-        submit_button = st.form_submit_button("Upload Document")
+        uploaded_files = st.file_uploader(
+            "Upload PDF files", type="pdf", accept_multiple_files=True
+        )
+        submit_button = st.form_submit_button("Upload Documents")
         
-        if submit_button and uploaded_file:
-            # Validate the PDF
-            if validate_pdf(uploaded_file):
-                filename = custom_filename if custom_filename else uploaded_file.name
-                with st.spinner("Processing document..."):
-                    success = doc_processor.process_pdf(uploaded_file, filename)
+        if submit_button and uploaded_files:
+            successes = []
+            failures = []
+            for uploaded_file in uploaded_files:
+                filename = uploaded_file.name
+                if validate_pdf(uploaded_file):
+                    with st.spinner(f"Processing {filename}..."):
+                        success = doc_processor.process_pdf(uploaded_file, filename)
                     if success:
-                        st.success(f"Document '{filename}' uploaded and processed successfully!")
-                        # Log the document upload
+                        successes.append(filename)
                         if st.session_state.user:
-                            SessionLogger.log_activity(st.session_state.user["id"], "upload_document", f"File: {filename}")
-                        st.rerun()
+                            SessionLogger.log_activity(
+                                st.session_state.user["id"], 
+                                "upload_document", 
+                                f"File: {filename}"
+                            )
                     else:
-                        st.error("Failed to process the document. Please try again.")
-            else:
-                st.error("Invalid PDF file. Please ensure the file is a valid PDF and less than 10MB.")
+                        failures.append(filename)
+                else:
+                    failures.append(filename)
+            
+            if successes:
+                st.success(f"Successfully uploaded and processed: {', '.join(successes)}")
+            if failures:
+                st.error(f"Failed to process: {', '.join(failures)}")
+            
+            st.rerun()
     
-    # Document list
+    # Document list (unchanged)
     st.subheader("Uploaded Documents")
     documents = doc_processor.get_all_documents()
     
@@ -248,16 +259,19 @@ def render_document_management(doc_processor):
                     if st.button("Delete", key=f"delete_{doc_id}"):
                         if doc_processor.delete_document(doc_id):
                             st.success("Document deleted successfully!")
-                            # Log the document deletion
                             if st.session_state.user:
-                                SessionLogger.log_activity(st.session_state.user["id"], "delete_document", f"File: {doc_info['filename']}")
+                                SessionLogger.log_activity(
+                                    st.session_state.user["id"], 
+                                    "delete_document", 
+                                    f"File: {doc_info['filename']}"
+                                )
                             st.rerun()
                         else:
                             st.error("Failed to delete document.")
                 
                 st.write(f"Chunks: {doc_info['chunk_count']}")
                 st.divider()
-
+                
 def render_user_management():
     st.title("User Management")
     st.write("Manage system users.")

@@ -192,7 +192,7 @@ class DocumentProcessor:
             print(f"Error processing PDF: {e}")
             return False
     
-    def search_documents(self, query, k=5):
+    def search_documents(self, query, k=3):
         """
         Search for documents relevant to the query
         """
